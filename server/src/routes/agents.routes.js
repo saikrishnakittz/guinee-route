@@ -20,6 +20,16 @@ router.get("/live", async (req, res) => {
             totalKm: true,
             coveredKm: true,
             status: true,
+            startedAt: true,
+            violations: {
+              select: {
+                id: true,
+                violationCode: true,
+                violationType: true,
+                fineAmountGnf: true,
+                paid: true,
+              },
+            },
           },
         },
       },
