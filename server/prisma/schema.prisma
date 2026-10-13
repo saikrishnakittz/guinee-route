@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AgentStatus {
+  ON_DUTY
+  ON_MISSION
+  BREAK
+  OFFLINE
+}
+
+enum MissionStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model Agent {
+  id          Int         @id @default(autoincrement())
+  badgeNumber String      @unique @map("badge_number")
+  name        String
+  status      AgentStatus @default(ON_DUTY)
+  lat         Float
+  lng         Float
+
+  missions    Mission[]
+
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@map("agents")
+}
+
+model Mission {
+  id          Int           @id @default(autoincrement())
+  missionCode String        @unique @map("mission_code")
+  roadName    String        @default("RN1") @map("road_name")
+  totalKm     Float         @map("total_km")
+  coveredKm   Float         @default(0) @map("covered_km")
+  status      MissionStatus @default(ACTIVE)
+
+  agentId     Int?          @map("agent_id")
+  agent       Agent?        @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  startedAt   DateTime      @default(now()) @map("started_at")
+  violations  Violation[]
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@index([agentId])
+  @@index([status])
+  @@map("missions")
+}
+
+model Vehicle {
+  id           Int         @id @default(autoincrement())
+  licensePlate String      @unique @map("license_plate")
+  owner        String
+  violations   Violation[]
+
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  @@map("vehicles")
+}
+
+model Violation {
+  id             Int      @id @default(autoincrement())
+  violationCode  String   @unique @map("violation_code")
+  violationType  String   @map("violation_type")
+  fineAmountGnf  Int      @map("fine_amount_gnf")
+  paid           Boolean  @default(false)
+
+  vehicleId      Int      @map("vehicle_id")
+  vehicle        Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  missionId      Int?     @map("mission_id")
+  mission        Mission? @relation(fields: [missionId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([vehicleId])
+  @@index([missionId])
+  @@map("violations")
+}
