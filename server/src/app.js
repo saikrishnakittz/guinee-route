@@ -5,6 +5,10 @@ const cors = require("cors");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const agentsRoutes = require("./routes/agents.routes");
 const vehiclesRoutes = require("./routes/vehicles.routes");
+const missionsRoutes = require("./routes/missions.routes");
+const damageReportsRoutes = require("./routes/damage-reports.routes");
+const violationsRoutes = require("./routes/violations.routes");
+const activitiesRoutes = require("./routes/activities.routes");
 
 const app = express();
 
@@ -41,6 +45,10 @@ app.get("/api/v1/health", (req, res) => {
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/agents", agentsRoutes);
 app.use("/api/v1/vehicles", vehiclesRoutes);
+app.use("/api/v1/missions", missionsRoutes);
+app.use("/api/v1/damage-reports", damageReportsRoutes);
+app.use("/api/v1/violations", violationsRoutes);
+app.use("/api/v1/activities", activitiesRoutes);
 
 const PORT = process.env.PORT || 5000;
 

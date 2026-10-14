@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,8 +13,11 @@ datasource db {
 enum AgentStatus {
   ON_DUTY
   ON_MISSION
+  INSPECTING
   BREAK
   OFFLINE
+  AVAILABLE
+  EMERGENCY
 }
 
 enum MissionStatus {
@@ -27,17 +27,30 @@ enum MissionStatus {
 }
 
 model Agent {
-  id          Int         @id @default(autoincrement())
-  badgeNumber String      @unique @map("badge_number")
-  name        String
-  status      AgentStatus @default(ON_DUTY)
-  lat         Float
-  lng         Float
+  id               Int            @id @default(autoincrement())
+  badgeNumber      String         @unique @map("badge_number")
+  name             String
+  status           AgentStatus    @default(ON_DUTY)
+  role             String         @default("Field Inspector")
+  supervisor       String         @default("Ibrahima Camara (National)")
+  region           String         @default("Kindia")
+  scope            String         @default("All Guinea")
+  location         String?
+  dutyStart        String?        @map("duty_start")
+  cashTodayGnf     Int            @default(0) @map("cash_today_gnf")
+  gpsActive        Boolean        @default(true) @map("gps_active")
+  connectionStatus String         @default("Online") @map("connection_status")
+  pendingRecords   Int            @default(0) @map("pending_records")
+  lastSyncAt       DateTime       @default(now()) @map("last_sync_at")
+  avatarBg         String?        @map("avatar_bg")
+  lat              Float
+  lng              Float
 
-  missions    Mission[]
+  missions         Mission[]
+  damageReports    DamageReport[]
 
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
 
   @@map("agents")
 }
@@ -46,6 +59,9 @@ model Mission {
   id          Int           @id @default(autoincrement())
   missionCode String        @unique @map("mission_code")
   roadName    String        @default("RN1") @map("road_name")
+  route       String?
+  region      String        @default("Kindia")
+  supervisor  String?
   totalKm     Float         @map("total_km")
   coveredKm   Float         @default(0) @map("covered_km")
   status      MissionStatus @default(ACTIVE)
@@ -60,6 +76,7 @@ model Mission {
 
   @@index([agentId])
   @@index([status])
+  @@index([region])
   @@map("missions")
 }
 
@@ -76,21 +93,65 @@ model Vehicle {
 }
 
 model Violation {
-  id             Int      @id @default(autoincrement())
-  violationCode  String   @unique @map("violation_code")
-  violationType  String   @map("violation_type")
-  fineAmountGnf  Int      @map("fine_amount_gnf")
-  paid           Boolean  @default(false)
+  id            Int      @id @default(autoincrement())
+  violationCode String   @unique @map("violation_code")
+  violationType String   @map("violation_type")
+  fineAmountGnf Int      @map("fine_amount_gnf")
+  paid          Boolean  @default(false)
+  severity      String   @default("Moderate")
+  paymentMethod String?  @map("payment_method")
+  paymentStatus String   @default("Issued") @map("payment_status")
+  roadName      String?  @map("road_name")
+  region        String   @default("Kindia")
+  agentName     String?  @map("agent_name")
 
-  vehicleId      Int      @map("vehicle_id")
-  vehicle        Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicleId     Int      @map("vehicle_id")
+  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
-  missionId      Int?     @map("mission_id")
-  mission        Mission? @relation(fields: [missionId], references: [id], onDelete: SetNull)
+  missionId     Int?     @map("mission_id")
+  mission       Mission? @relation(fields: [missionId], references: [id], onDelete: SetNull)
 
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   @@index([vehicleId])
   @@index([missionId])
+  @@index([region])
   @@map("violations")
+}
+
+model DamageReport {
+  id          Int      @id @default(autoincrement())
+  reportCode  String   @unique @map("report_code")
+  road        String
+  category    String
+  severity    String   @default("Moderate")
+  status      String   @default("Reported")
+  region      String   @default("Kindia")
+  description String?
+  agentName   String?  @map("agent_name")
+
+  agentId     Int?     @map("agent_id")
+  agent       Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([agentId])
+  @@index([region])
+  @@index([severity])
+  @@map("damage_reports")
+}
+
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  activityKey String?  @map("activity_key")
+  type        String
+  title       String
+  description String
+  region      String   @default("Kindia")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([region])
+  @@index([type])
+  @@map("activity_logs")
 }

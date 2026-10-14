@@ -35,6 +35,7 @@ import "./CommandDashboard.css";
 
 import {
   getDashboardStats,
+  getDashboardOverview,
   getLiveAgents,
   updateAgentStatus,
 } from "../services/api";
@@ -46,11 +47,13 @@ const statusLabels = {
   BREAK: "On Break",
   OFFLINE: "Offline",
   AVAILABLE: "Available",
+  EMERGENCY: "Emergency",
 };
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [agents, setAgents] = useState([]);
+  const [backendOverview, setBackendOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [selectedMission, setSelectedMission] = useState(null);
@@ -168,21 +171,39 @@ export default function Dashboard() {
   // Fetch stats and agents
   const loadDashboard = useCallback(async () => {
     try {
-      const [statsData, agentData] = await Promise.all([
+      const [statsData, overviewData] = await Promise.all([
         getDashboardStats().catch(() => null),
-        getLiveAgents().catch(() => null),
+        getDashboardOverview({
+          search: searchQuery,
+          region: selectedRegion,
+          supervisor: selectedSupervisor,
+          status: selectedStatus,
+          scope: selectedScope,
+        }).catch(() => null),
       ]);
 
       if (statsData) setStats(statsData);
-      if (agentData && agentData.length > 0) {
-        setAgents(agentData);
+      if (overviewData) {
+        setBackendOverview(overviewData);
+        if (overviewData.agents && overviewData.agents.length > 0) {
+          setAgents(overviewData.agents);
+        }
       }
     } catch (err) {
       console.warn("Using dashboard seeded defaults for Command Center", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchQuery, selectedRegion, selectedSupervisor, selectedStatus, selectedScope]);
+
+  const handleUpdateStatus = async (agentId, nextStatus) => {
+    try {
+      await updateAgentStatus(agentId, nextStatus);
+      await loadDashboard();
+    } catch (err) {
+      console.error("Failed to update agent status:", err);
+    }
+  };
 
   useEffect(() => {
     loadDashboard();
@@ -191,7 +212,7 @@ export default function Dashboard() {
   }, [loadDashboard]);
 
   // Seeded / combined agent list matching the uploaded design
-  const displayAgents = [
+  const defaultAgents = [
     {
       id: 1,
       name: "Mamadou Diallo",
@@ -367,7 +388,7 @@ export default function Dashboard() {
   ];
 
   // Active missions list
-  const activeMissionsList = [
+  const defaultMissions = [
     {
       id: "00984",
       code: "GR-MSN-2026-00984",
@@ -423,7 +444,7 @@ export default function Dashboard() {
   ];
 
   // Damage Reports dataset
-  const damageReportsList = [
+  const defaultDamages = [
     {
       id: "26-04-128",
       road: "RN1",
@@ -475,7 +496,7 @@ export default function Dashboard() {
   ];
 
   // Violations dataset
-  const violationsList = [
+  const defaultViolations = [
     {
       id: "26-01844",
       agent: "M. Diallo",
@@ -531,7 +552,7 @@ export default function Dashboard() {
   ];
 
   // Mobile Sync Health dataset
-  const syncHealthList = [
+  const defaultSyncHealth = [
     {
       agent: "Alpha Condé",
       badge: "AGT-1061",
@@ -555,7 +576,7 @@ export default function Dashboard() {
   ];
 
   // Recent Activities dataset
-  const recentActivitiesList = [
+  const defaultActivities = [
     {
       id: "act-1",
       time: "10:42",
@@ -611,6 +632,69 @@ export default function Dashboard() {
       region: "Kindia",
     },
   ];
+
+  // Live dynamic lists connecting PostgreSQL Prisma to UI
+  const displayAgents = (backendOverview?.agents && backendOverview.agents.length > 0)
+    ? backendOverview.agents.map((ag) => {
+      const activeMsn = ag.missions && ag.missions[0] ? ag.missions[0] : null;
+      return {
+        id: ag.id,
+        name: ag.name,
+        badgeNumber: ag.badgeNumber,
+        role: ag.role || "Field Inspector",
+        status: ag.status,
+        statusLabel: statusLabels[ag.status] || ag.status,
+        statusClass:
+          ag.status === "ON_MISSION" ? "pill-active" :
+            ag.status === "INSPECTING" ? "pill-inspecting" :
+              ag.status === "AVAILABLE" ? "pill-available" :
+                ag.status === "BREAK" ? "pill-break" :
+                  ag.status === "EMERGENCY" ? "pill-emergency" : "pill-offline",
+        initials: ag.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
+        avatarBg: ag.avatarBg || "#2563eb",
+        missionCode: activeMsn ? activeMsn.missionCode : "—",
+        shortMission: activeMsn ? activeMsn.missionCode.replace("GR-MSN-2026-", "…") : "—",
+        road: activeMsn ? activeMsn.roadName : (ag.location || "RN1"),
+        route: (activeMsn && activeMsn.route) ? activeMsn.route : (ag.location || "Guinée Corridor"),
+        location: ag.location || (activeMsn ? activeMsn.roadName : "Conakry"),
+        region: ag.region || "Kindia",
+        supervisor: ag.supervisor || "Ibrahima Camara (National)",
+        scope: ag.scope || "All Guinea",
+        duty: "02h 14m",
+        dutyStart: ag.dutyStart || "08:00",
+        sync: ag.connectionStatus === "Offline" ? "18 min" : "1 min",
+        syncAgo: ag.connectionStatus === "Offline" ? "18 min ago" : "1 min ago",
+        syncClass: ag.connectionStatus === "Offline" ? "sync-offline" : "sync-online",
+        progress: activeMsn && activeMsn.totalKm > 0 ? Math.round((activeMsn.coveredKm / activeMsn.totalKm) * 100) : 0,
+        cashToday: `GNF ${(ag.cashTodayGnf || 0).toLocaleString()}`,
+        gps: ag.gpsActive ? "Active" : "Inactive",
+        connection: ag.connectionStatus || "Online",
+        lat: ag.lat,
+        lng: ag.lng,
+        missions: ag.missions || [],
+      };
+    })
+    : defaultAgents;
+
+  const activeMissionsList = (backendOverview?.missions && backendOverview.missions.length > 0)
+    ? backendOverview.missions
+    : defaultMissions;
+
+  const damageReportsList = (backendOverview?.damageReports && backendOverview.damageReports.length > 0)
+    ? backendOverview.damageReports
+    : defaultDamages;
+
+  const violationsList = (backendOverview?.violations && backendOverview.violations.length > 0)
+    ? backendOverview.violations
+    : defaultViolations;
+
+  const syncHealthList = (backendOverview?.syncHealth && backendOverview.syncHealth.length > 0)
+    ? backendOverview.syncHealth
+    : defaultSyncHealth;
+
+  const recentActivitiesList = (backendOverview?.recentActivities && backendOverview.recentActivities.length > 0)
+    ? backendOverview.recentActivities
+    : defaultActivities;
 
   // Helper check for active filters
   const isFiltered =
@@ -785,21 +869,21 @@ export default function Dashboard() {
 
   const searchResultsCount = searchQuery.trim()
     ? filteredAgents.length +
-      filteredMissions.length +
-      filteredViolations.length +
-      filteredDamageReports.length
+    filteredMissions.length +
+    filteredViolations.length +
+    filteredDamageReports.length
     : 0;
 
   // Currently focused agent in the Agent Detail card
   const activeInspector = activeAgentDetail || (filteredAgents.length > 0 ? filteredAgents[0] : displayAgents[0]);
 
-  // Top 6 KPI Cards definition matching uploaded image
+  // Top 6 KPI Cards definition matching uploaded image and populated from live PostgreSQL
   const kpiCards = [
     {
       type: "agents",
       label: "Agents Online",
       value: isFiltered ? `${filteredAgents.length}` : (stats?.agentsOnDuty ?? "42"),
-      description: isFiltered ? `${filteredAgents.length} matching filters` : "48 on duty today",
+      description: isFiltered ? `${filteredAgents.length} matching filters` : `${stats?.totalAgents ?? 48} on duty today`,
       trend: "+3",
       trendType: "pos",
     },
@@ -814,8 +898,8 @@ export default function Dashboard() {
     {
       type: "reports",
       label: "Reports Today",
-      value: isFiltered ? `${filteredDamageReports.length}` : "27",
-      description: "5 severe / critical",
+      value: isFiltered ? `${filteredDamageReports.length}` : (stats?.totalDamageReports ?? "27"),
+      description: stats?.criticalHazardsCount ? `${stats.criticalHazardsCount} severe / critical` : "5 severe / critical",
       trend: "+6",
       trendType: "pos",
     },
@@ -832,7 +916,7 @@ export default function Dashboard() {
       label: "Fine Value Issued",
       value: isFiltered && filteredViolations.length < 4
         ? `GNF ${(filteredViolations.length * 0.7).toFixed(2)}M`
-        : "GNF 12.85M",
+        : (stats?.totalFinesGnf ? `GNF ${(stats.totalFinesGnf / 1000000).toFixed(2)}M` : "GNF 12.85M"),
       description: "Today",
     },
     {
@@ -840,8 +924,8 @@ export default function Dashboard() {
       label: "Cash Collected",
       value: isFiltered && filteredViolations.length < 4
         ? `GNF ${(filteredViolations.length * 0.35).toFixed(2)}M`
-        : "GNF 5.40M",
-      description: "GNF 1.25M pending",
+        : (stats?.paidFinesGnf ? `GNF ${(stats.paidFinesGnf / 1000000).toFixed(2)}M` : "GNF 5.40M"),
+      description: stats?.unpaidFinesGnf ? `GNF ${(stats.unpaidFinesGnf / 1000000).toFixed(2)}M pending` : "GNF 1.25M pending",
     },
   ];
 
@@ -944,15 +1028,14 @@ export default function Dashboard() {
                               </div>
                             </div>
                             <span
-                              className={`cmd-search-item-badge ${
-                                ag.status === "ON_MISSION"
-                                  ? "status-on-mission"
-                                  : ag.status === "INSPECTING"
-                                    ? "status-inspecting"
-                                    : ag.status === "AVAILABLE"
-                                      ? "status-available"
-                                      : "status-offline"
-                              }`}
+                              className={`cmd-search-item-badge ${ag.status === "ON_MISSION"
+                                ? "status-on-mission"
+                                : ag.status === "INSPECTING"
+                                  ? "status-inspecting"
+                                  : ag.status === "AVAILABLE"
+                                    ? "status-available"
+                                    : "status-offline"
+                                }`}
                             >
                               {ag.statusLabel}
                             </span>
@@ -1709,7 +1792,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 className="cmd-card-action"
-                onClick={() => setSelectedAgent(displayAgents[0])}
+              // onClick={() => setSelectedAgent(displayAgents[0])}
               >
                 View all agents <ExternalLink size={12} />
               </button>
@@ -1754,15 +1837,14 @@ export default function Dashboard() {
                         </td>
                         <td>
                           <span
-                            className={`cmd-status-pill ${
-                              ag.status === "ON_MISSION"
-                                ? "status-on-mission"
-                                : ag.status === "INSPECTING"
-                                  ? "status-inspecting"
-                                  : ag.status === "AVAILABLE"
-                                    ? "status-available"
-                                    : "status-offline"
-                            }`}
+                            className={`cmd-status-pill ${ag.status === "ON_MISSION"
+                              ? "status-on-mission"
+                              : ag.status === "INSPECTING"
+                                ? "status-inspecting"
+                                : ag.status === "AVAILABLE"
+                                  ? "status-available"
+                                  : "status-offline"
+                              }`}
                           >
                             <span className="dot" />
                             {ag.statusLabel}
@@ -1778,11 +1860,10 @@ export default function Dashboard() {
                         <td>
                           <span className="cmd-sync-status">
                             <span
-                              className={`dot ${
-                                ag.syncClass === "sync-offline"
-                                  ? "sync-dot-red"
-                                  : "sync-dot-green"
-                              }`}
+                              className={`dot ${ag.syncClass === "sync-offline"
+                                ? "sync-dot-red"
+                                : "sync-dot-green"
+                                }`}
                             />
                             {ag.sync}
                           </span>
@@ -1805,7 +1886,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 className="cmd-card-action"
-                onClick={() => setSelectedMission(displayAgents[0])}
+              // onClick={() => setSelectedMission(displayAgents[0])}
               >
                 View all missions <ExternalLink size={12} />
               </button>
@@ -2313,16 +2394,16 @@ export default function Dashboard() {
 
               <div className="cmd-coverage-stat-row">
                 <div className="cmd-cov-block">
-                  <div className="val">164 km</div>
+                  <div className="val">{stats?.totalKm ? `${stats.totalKm} km` : "164 km"}</div>
                   <div className="lbl">Assigned</div>
                 </div>
                 <div className="cmd-cov-block">
-                  <div className="val">126 km</div>
+                  <div className="val">{stats?.coveredKm ? `${stats.coveredKm} km` : "126 km"}</div>
                   <div className="lbl">Inspected</div>
                 </div>
                 <div className="cmd-cov-block">
                   <div className="val" style={{ color: "#009360" }}>
-                    77%
+                    {stats?.coveragePercent ? `${stats.coveragePercent}%` : "77%"}
                   </div>
                   <div className="lbl">Completion</div>
                 </div>
@@ -2545,9 +2626,32 @@ export default function Dashboard() {
               <div className="eyebrow">FIELD AGENT DETAILS</div>
               <h2 id="agent-modal-title">{selectedAgent.name}</h2>
               <p>Badge: {selectedAgent.badgeNumber}</p>
-              <p>
-                Status:{" "}
-                {statusLabels[selectedAgent.status] || selectedAgent.status}
+              <p style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>Status:</span>
+                <select
+                  value={selectedAgent.status}
+                  onChange={(e) => {
+                    const newStatus = e.target.value;
+                    handleUpdateStatus(selectedAgent.id, newStatus);
+                    setSelectedAgent({ ...selectedAgent, status: newStatus });
+                  }}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    border: "1px solid #d1d5db",
+                    background: "#ffffff",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="ON_DUTY">On Duty</option>
+                  <option value="ON_MISSION">On Mission</option>
+                  <option value="INSPECTING">Inspecting</option>
+                  <option value="AVAILABLE">Available</option>
+                  <option value="BREAK">On Break</option>
+                  <option value="OFFLINE">Offline</option>
+                  <option value="EMERGENCY">Emergency</option>
+                </select>
               </p>
               <p>Latitude: {selectedAgent.lat}</p>
               <p>Longitude: {selectedAgent.lng}</p>

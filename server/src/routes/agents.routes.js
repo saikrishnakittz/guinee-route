@@ -3,12 +3,38 @@ const prisma = require("../prisma");
 
 const router = express.Router();
 
-const allowedStatuses = ["ON_DUTY", "ON_MISSION", "BREAK", "OFFLINE"];
+const allowedStatuses = [
+  "ON_DUTY",
+  "ON_MISSION",
+  "INSPECTING",
+  "BREAK",
+  "OFFLINE",
+  "AVAILABLE",
+  "EMERGENCY",
+];
 
 // GET /api/v1/agents/live
 router.get("/live", async (req, res) => {
   try {
+    const { region, supervisor, status, scope, search } = req.query;
+    const where = {};
+
+    if (region && region !== "All Regions") where.region = region;
+    if (supervisor && supervisor !== "All Supervisors") where.supervisor = supervisor;
+    if (scope && scope !== "All Guinea") where.scope = scope;
+    if (status && status !== "Agent Status" && status !== "ALL") where.status = status;
+    if (search && search.trim()) {
+      const q = search.trim();
+      where.OR = [
+        { name: { contains: q, mode: "insensitive" } },
+        { badgeNumber: { contains: q, mode: "insensitive" } },
+        { role: { contains: q, mode: "insensitive" } },
+        { location: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
     const agents = await prisma.agent.findMany({
+      where,
       orderBy: { id: "asc" },
       include: {
         missions: {
@@ -17,6 +43,7 @@ router.get("/live", async (req, res) => {
             id: true,
             missionCode: true,
             roadName: true,
+            route: true,
             totalKm: true,
             coveredKm: true,
             status: true,
