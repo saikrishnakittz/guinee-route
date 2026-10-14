@@ -237,7 +237,7 @@ export default function Dashboard() {
         </header>
 
         <div className="page-content">
-          <section className="welcome-row">
+          <section className="welcome-row" id="live-operations">
             <div>
               <div className="eyebrow">OPERATIONS COMMAND CENTER</div>
               <h1>
@@ -321,12 +321,29 @@ export default function Dashboard() {
                 </p>
                 <p>Latitude: {selectedAgent.lat}</p>
                 <p>Longitude: {selectedAgent.lng}</p>
-                <button
-                  className="primary-button"
-                  onClick={() => setSelectedAgent(null)}
-                >
-                  Close
-                </button>
+                <div style={{ display: "flex", gap: "10px", marginTop: "14px" }}>
+                  {selectedAgent.missions?.length > 0 && (
+                    <button
+                      className="primary-button"
+                      onClick={() => {
+                        setSelectedMission(selectedAgent);
+                        setSelectedAgent(null);
+                      }}
+                    >
+                      View Active Mission
+                    </button>
+                  )}
+                  <button
+                    className={
+                      selectedAgent.missions?.length > 0
+                        ? "icon-button"
+                        : "primary-button"
+                    }
+                    onClick={() => setSelectedAgent(null)}
+                  >
+                    Close
+                  </button>
+                </div>
               </section>
             </div>
           )}
@@ -335,13 +352,19 @@ export default function Dashboard() {
             mission={selectedMission}
             agent={
               selectedMission
-                ? agents.find((item) =>
-                    item.missions?.some(
-                      (mission) => mission.id === selectedMission.id,
-                    ),
-                  )
+                ? selectedMission.badgeNumber
+                  ? selectedMission
+                  : agents.find(
+                      (item) =>
+                        item.id === selectedMission.agentId ||
+                        item.missions?.some(
+                          (m) => m.id === selectedMission.id,
+                        ),
+                    )
                 : null
             }
+            agents={agents}
+            onSelectMission={setSelectedMission}
             onClose={() => setSelectedMission(null)}
           />
 

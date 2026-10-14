@@ -42,6 +42,16 @@ export default function Sidebar() {
             className={({ isActive }) =>
               `nav-item ${isActive && index === 0 ? "active" : ""}`
             }
+            onClick={() => {
+              if (
+                label === "Live Operations" ||
+                label === "Overview" ||
+                to === "/#live-operations" ||
+                to === "/"
+              ) {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }}
           >
             <Icon size={19} />
             <span>{label}</span>

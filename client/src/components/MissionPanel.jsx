@@ -1,4 +1,5 @@
 import { MapPin, Navigation, Route } from "lucide-react";
+import { getPointOnRN1 } from "../utils/corridor";
 
 export default function MissionPanel({
   agents,
@@ -72,23 +73,49 @@ export default function MissionPanel({
         </div>
 
         {agents
-          .filter((agent) => agent.status === "ON_MISSION")
+          .filter(
+            (agent) =>
+              agent.status === "ON_MISSION" ||
+              agent.missions?.some(
+                (m) => m.status === "ACTIVE" || m.roadName === "RN1",
+              ) ||
+              (agent.missions && agent.missions.length > 0),
+          )
           .map((agent, index) => {
-            const positions = [
-              { left: "35%", top: "43%" },
-              { left: "67%", top: "53%" },
-              { left: "50%", top: "29%" },
-            ];
-            const position = positions[index % positions.length];
+            const mission = agent.missions?.[0];
+            const progressRatio =
+              mission?.totalKm > 0
+                ? Math.min(1, Math.max(0, mission.coveredKm / mission.totalKm))
+                : agent.lat
+                  ? Math.min(
+                      1,
+                      Math.max(0, (agent.lat - 9.705) / (9.73 - 9.705)),
+                    )
+                  : index === 0
+                    ? 0.398
+                    : 0.267;
+            const pt = getPointOnRN1(progressRatio);
+            const position = {
+              left: `${(pt.x / 600) * 100}%`,
+              top: `${(pt.y / 250) * 100}%`,
+            };
 
             return (
               <button
                 key={agent.id}
                 className="agent-marker"
                 style={position}
-                title={`${agent.name} — ${agent.badgeNumber}`}
-                onClick={() => onSelectAgent(agent)}
+                title={`${agent.name} (${agent.badgeNumber}) — ${mission?.missionCode || "Active on RN1"}`}
+                onClick={() => {
+                  if (agent.missions?.length > 0 && onSelectMission) {
+                    onSelectMission(agent);
+                  } else if (onSelectAgent) {
+                    onSelectAgent(agent);
+                  }
+                }}
+                aria-label={`Agent ${agent.name}, ${agent.badgeNumber}`}
               >
+                <span className="marker-radar-pulse" />
                 <Navigation size={16} />
               </button>
             );

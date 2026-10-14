@@ -13,16 +13,26 @@ function ScrollToHash() {
   const { pathname, hash } = useLocation();
 
   useEffect(() => {
-    if (pathname !== "/" || !hash) return;
+    if (pathname !== "/") return;
+
+    if (!hash || hash === "#live-operations" || hash === "#overview") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
 
     const id = decodeURIComponent(hash.slice(1));
 
     // Wait for the dashboard DOM to render.
     requestAnimationFrame(() => {
-      document.getElementById(id)?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     });
   }, [pathname, hash]);
 
