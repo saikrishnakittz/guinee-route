@@ -1,27 +1,51 @@
-import { Users, Radio, WifiOff, Banknote } from "lucide-react";
+import {
+  Users,
+  Route,
+  ClipboardList,
+  ShieldAlert,
+  CreditCard,
+  Wallet,
+  ArrowUpRight,
+} from "lucide-react";
 
-const icons = {
+const iconMap = {
   agents: Users,
-  totalAgents: Users,
-  missions: Radio,
-  offline: WifiOff,
-  fines: Banknote,
+  missions: Route,
+  reports: ClipboardList,
+  violations: ShieldAlert,
+  fines: CreditCard,
+  cash: Wallet,
 };
 
-export default function StatCard({ type, label, value, description, accent }) {
-  const Icon = icons[type];
+export default function StatCard({
+  type,
+  label,
+  value,
+  description,
+  trend,
+  trendType = "positive",
+}) {
+  const Icon = iconMap[type] || Users;
 
   return (
-    <article className="stat-card">
-      <div className="stat-top">
-        <span className="stat-label">{label}</span>
-        <span className={`stat-icon ${accent}`}>
-          <Icon size={20} />
+    <article className="cmd-kpi-card stat-card">
+      <div className="cmd-kpi-top stat-top">
+        <span className="cmd-kpi-label stat-label">{label}</span>
+        <span className="cmd-kpi-icon stat-icon-wrap">
+          <Icon size={14} />
         </span>
       </div>
 
-      <div className="stat-value">{value}</div>
-      <div className="stat-description">{description}</div>
+      <div className="cmd-kpi-main stat-main-row">
+        <div className="cmd-kpi-value stat-value">{value}</div>
+        {trend && (
+          <span className={`cmd-kpi-trend stat-trend-chip trend-${trendType}`}>
+            {trend}
+          </span>
+        )}
+      </div>
+
+      <div className="cmd-kpi-sub stat-description">{description}</div>
     </article>
   );
 }

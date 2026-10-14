@@ -1,90 +1,184 @@
 import {
-  Activity,
   LayoutDashboard,
   Map,
-  Radio,
-  ShieldCheck,
+  Route,
+  Users,
+  AlertTriangle,
+  Milestone,
+  FileWarning,
+  Wrench,
+  ShieldAlert,
   CarFront,
-  UserRound,
+  Building2,
+  Receipt,
+  CreditCard,
+  Scale,
+  BarChart3,
+  UserCheck,
+  KeyRound,
+  Globe,
+  Settings,
+  Workflow,
+  History,
+  Activity,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
-const navigation = [
-  { label: "Overview", icon: LayoutDashboard, to: "/" },
-  { label: "Live Operations", icon: Radio, to: "/#live-operations" },
-  { label: "Missions", icon: Map, to: "/#missions" },
-  { label: "Agents", icon: ShieldCheck, to: "/#agents" },
-  { label: "Vehicles", icon: CarFront, to: "/#vehicles" },
+const navSections = [
+  {
+    title: "COMMAND",
+    items: [
+      { label: "Dashboard", icon: LayoutDashboard, to: "/", active: true },
+      { label: "Live Map", icon: Map, to: "/#live-map" },
+    ],
+  },
+  {
+    title: "OPERATIONS",
+    items: [
+      { label: "Missions", icon: Route, to: "/#missions", badge: 18 },
+      { label: "Agents", icon: Users, to: "/#agents", badge: 42 },
+      {
+        label: "Emergencies",
+        icon: AlertTriangle,
+        to: "/#emergencies",
+        badge: 1,
+        badgeType: "danger",
+      },
+    ],
+  },
+  {
+    title: "ROAD MANAGEMENT",
+    items: [
+      { label: "Roads", icon: Milestone, to: "/#roads" },
+      {
+        label: "Damage Reports",
+        icon: FileWarning,
+        to: "/#damage-reports",
+        badge: 27,
+      },
+      { label: "Repairs", icon: Wrench, to: "/#repairs", badge: 8 },
+    ],
+  },
+  {
+    title: "ENFORCEMENT",
+    items: [
+      { label: "Violations", icon: ShieldAlert, to: "/#enforcement" },
+      { label: "Vehicles", icon: CarFront, to: "/#vehicles" },
+      { label: "Companies", icon: Building2, to: "/#companies" },
+    ],
+  },
+  {
+    title: "FINANCE",
+    items: [
+      { label: "Fines", icon: Receipt, to: "/#finance" },
+      { label: "Payments", icon: CreditCard, to: "/#payments" },
+      {
+        label: "Reconciliation",
+        icon: Scale,
+        to: "/#reconciliation",
+        badge: "!",
+        badgeType: "warning",
+      },
+    ],
+  },
+  {
+    title: "ANALYTICS",
+    items: [
+      { label: "Reports", icon: BarChart3, to: "/#reports" },
+    ],
+  },
+  {
+    title: "ADMINISTRATION",
+    items: [
+      { label: "Users", icon: UserCheck, to: "/#users" },
+      { label: "Roles", icon: KeyRound, to: "/#roles" },
+      { label: "Geography", icon: Globe, to: "/#geography" },
+      { label: "Configuration", icon: Settings, to: "/#config" },
+      { label: "Integrations", icon: Workflow, to: "/#integrations" },
+      { label: "Audit Logs", icon: History, to: "/#audit" },
+    ],
+  },
 ];
+
+function handleNavClick(to) {
+  const sectionId = to.split("#")[1];
+
+  if (!sectionId) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+
+  // Allow the URL hash to update before scrolling.
+  requestAnimationFrame(() => {
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  });
+}
 
 export default function Sidebar() {
   return (
     <aside className="sidebar">
+      {/* Brand Header */}
       <div className="brand">
-        <div className="brand-icon">
-          <Activity size={23} />
+        <div className="brand-flag" aria-label="Guinea Flag" title="République de Guinée">
+          <span className="flag-stripe flag-red" />
+          <span className="flag-stripe flag-yellow" />
+          <span className="flag-stripe flag-green" />
         </div>
-
         <div>
-          <div className="brand-name">GuinéeRoute</div>
-          <div className="brand-subtitle">COMMAND CENTER</div>
+          <div className="brand-name">
+            GuinéeRoute <span className="brand-dot" />
+          </div>
+          <div className="brand-subtitle">ADMIN PLATFORM</div>
         </div>
       </div>
 
-      <div className="nav-label">WORKSPACE</div>
+      {/* Navigation Sections */}
+      <nav className="navigation sidebar-nav-scroll">
+        {navSections.map((section) => (
+          <div key={section.title} className="sidebar-group">
+            <div className="nav-label">{section.title}</div>
+            <div className="nav-group-items">
+              {section.items.map(
+                ({ label, icon: Icon, to, badge, badgeType, active }) => (
+                  <NavLink
+                    key={label}
+                    to={to}
+                    end={to === "/"}
+                    className={({ isActive }) =>
+                      `nav-item ${isActive && to === "/" ? "active" : ""
+                      }`
+                    }
+                    onClick={() => handleNavClick(to)}
+                  >
+                    <Icon size={17} className="nav-icon" />
+                    <span className="nav-text">{label}</span>
 
-      <nav className="navigation">
-        {navigation.map(({ label, icon: Icon, to }, index) => (
-          <NavLink
-            key={label}
-            to={to}
-            end={index === 0}
-            className={({ isActive }) =>
-              `nav-item ${isActive && index === 0 ? "active" : ""}`
-            }
-            onClick={() => {
-              if (
-                label === "Live Operations" ||
-                label === "Overview" ||
-                to === "/#live-operations" ||
-                to === "/"
-              ) {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }
-            }}
-          >
-            <Icon size={19} />
-            <span>{label}</span>
-
-            {label === "Live Operations" && <span className="nav-live-dot" />}
-          </NavLink>
+                    {badge !== undefined && (
+                      <span
+                        className={`sidebar-badge ${badgeType ? `badge-${badgeType}` : ""
+                          }`}
+                      >
+                        {badge}
+                      </span>
+                    )}
+                  </NavLink>
+                ),
+              )}
+            </div>
+          </div>
         ))}
-
-        <NavLink
-          to="/field-agent"
-          className={({ isActive }) =>
-            `nav-item field-agent-nav ${isActive ? "active" : ""}`
-          }
-        >
-          <UserRound size={19} />
-          <span>Field Agent</span>
-        </NavLink>
       </nav>
 
+      {/* Bottom Profile */}
       <div className="sidebar-bottom">
-        <div className="connection-card">
-          <span className="connection-dot" />
-          <div>
-            <strong>System connected</strong>
-            <p>API connection ready</p>
-          </div>
-        </div>
-
         <div className="profile">
-          <div className="avatar">OP</div>
+          <div className="avatar avatar-ic">IC</div>
           <div className="profile-info">
-            <strong>Operations Admin</strong>
-            <span>Command Center</span>
+            <strong>Ibrahima Camara</strong>
+            <span>National Supervisor</span>
           </div>
         </div>
       </div>
