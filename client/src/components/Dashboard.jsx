@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 import Sidebar from "./Sidebar";
-import StatCard from "./Statcard";
+import StatCard from "./StatCard";
 import MissionPanel from "./MissionPanel";
 import VehicleLookup from "./VehicleLookup";
 import MissionDrawer from "./MissionDrawer";
@@ -355,12 +355,12 @@ export default function Dashboard() {
                 ? selectedMission.badgeNumber
                   ? selectedMission
                   : agents.find(
-                      (item) =>
-                        item.id === selectedMission.agentId ||
-                        item.missions?.some(
-                          (m) => m.id === selectedMission.id,
-                        ),
-                    )
+                    (item) =>
+                      item.id === selectedMission.agentId ||
+                      item.missions?.some(
+                        (m) => m.id === selectedMission.id,
+                      ),
+                  )
                 : null
             }
             agents={agents}
