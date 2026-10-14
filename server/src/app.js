@@ -16,6 +16,11 @@ app.use(
 );
 app.use(express.json());
 
+app.use((req, res, next) => {
+  console.log(`[API] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 app.get("/api/v1/health", (req, res) => {
   res.json({
     success: true,
@@ -30,6 +35,6 @@ app.use("/api/v1/vehicles", vehiclesRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`GuinéeRoute API running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`GuinéeRoute API listening on port ${PORT}`);
 });
