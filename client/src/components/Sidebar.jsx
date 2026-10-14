@@ -63,8 +63,7 @@ const navSections = [
     title: "ENFORCEMENT",
     items: [
       { label: "Violations", icon: ShieldAlert, to: "/#enforcement" },
-      { label: "Vehicles", icon: CarFront, to: "/#vehicles" },
-      { label: "Companies", icon: Building2, to: "/#companies" },
+      { label: "Vehicles", icon: CarFront, to: "/#vehicles" },   
     ],
   },
   {
@@ -90,10 +89,7 @@ const navSections = [
   {
     title: "ADMINISTRATION",
     items: [
-      { label: "Users", icon: UserCheck, to: "/#users" },
-      { label: "Roles", icon: KeyRound, to: "/#roles" },
       { label: "Geography", icon: Globe, to: "/#geography" },
-      { label: "Configuration", icon: Settings, to: "/#config" },
       { label: "Integrations", icon: Workflow, to: "/#integrations" },
       { label: "Audit Logs", icon: History, to: "/#audit" },
     ],
