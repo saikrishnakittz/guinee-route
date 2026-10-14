@@ -48,10 +48,12 @@ router.get("/stats", async (req, res) => {
       prisma.agent.aggregate({
         _sum: { cashTodayGnf: true },
       }),
-      prisma.damageReport.count(),
-      prisma.damageReport.count({
-        where: { severity: "Critical" },
-      }),
+      prisma.damageReport ? prisma.damageReport.count().catch(() => 0) : Promise.resolve(0),
+      prisma.damageReport
+        ? prisma.damageReport.count({
+            where: { severity: "Critical" },
+          }).catch(() => 0)
+        : Promise.resolve(0),
       prisma.mission.aggregate({
         where: { status: "ACTIVE" },
         _sum: { coveredKm: true, totalKm: true },
@@ -220,11 +222,13 @@ router.get("/overview", async (req, res) => {
           violations: true,
         },
       }),
-      prisma.damageReport.findMany({
-        where: damageWhere,
-        orderBy: { id: "desc" },
-        include: { agent: true },
-      }),
+      prisma.damageReport
+        ? prisma.damageReport.findMany({
+            where: damageWhere,
+            orderBy: { id: "desc" },
+            include: { agent: true },
+          }).catch(() => [])
+        : Promise.resolve([]),
       prisma.violation.findMany({
         where: violationWhere,
         orderBy: { id: "desc" },
@@ -233,11 +237,13 @@ router.get("/overview", async (req, res) => {
           mission: true,
         },
       }),
-      prisma.activityLog.findMany({
-        where: activityWhere,
-        orderBy: { createdAt: "desc" },
-        take: 10,
-      }),
+      prisma.activityLog
+        ? prisma.activityLog.findMany({
+            where: activityWhere,
+            orderBy: { createdAt: "desc" },
+            take: 10,
+          }).catch(() => [])
+        : Promise.resolve([]),
       prisma.agent.findMany({
         where: {
           OR: [
@@ -278,7 +284,7 @@ router.get("/overview", async (req, res) => {
     });
 
     // Format damage reports for UI
-    const formattedDamages = damageReports.map((d) => ({
+    const formattedDamages = (damageReports || []).map((d) => ({
       id: d.reportCode,
       road: d.road,
       agent: d.agentName || (d.agent ? d.agent.name : "Patrol"),

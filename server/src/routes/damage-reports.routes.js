@@ -23,6 +23,10 @@ router.get("/", async (req, res) => {
       ];
     }
 
+    if (!prisma.damageReport) {
+      return res.json({ success: true, data: [] });
+    }
+
     const reports = await prisma.damageReport.findMany({
       where,
       orderBy: { id: "desc" },

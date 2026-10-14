@@ -12,6 +12,10 @@ router.get("/", async (req, res) => {
     if (region && region !== "All Regions") where.region = region;
     if (type) where.type = type;
 
+    if (!prisma.activityLog) {
+      return res.json({ success: true, data: [] });
+    }
+
     const activities = await prisma.activityLog.findMany({
       where,
       orderBy: { createdAt: "desc" },
