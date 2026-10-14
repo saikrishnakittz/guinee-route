@@ -4,8 +4,6 @@ const money = (amount) =>
   `${new Intl.NumberFormat("en-US").format(amount || 0)} GNF`;
 
 export default function MissionDrawer({ mission, agent, onClose }) {
-  console.log("MissionDrawer props:", mission?.missions, agent); // Debugging line
-
   if (!mission) return null;
 
   const progress =
