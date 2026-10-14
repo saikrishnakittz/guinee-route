@@ -57,13 +57,7 @@ export default function Sidebar() {
             <strong>System connected</strong>
             <p>API connection ready</p>
           </div>
-        </div>
-
-        <a href="#settings" className="nav-item">
-          <Settings size={19} />
-          <span>Settings</span>
-          <ChevronLeft className="settings-chevron" size={16} />
-        </a>
+        </div>    
 
         <div className="profile">
           <div className="avatar">OP</div>
