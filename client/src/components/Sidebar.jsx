@@ -5,16 +5,16 @@ import {
   Radio,
   ShieldCheck,
   CarFront,
-  Settings,
-  ChevronLeft,
+  UserRound,
 } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 const navigation = [
-  { label: "Overview", icon: LayoutDashboard },
-  { label: "Live Operations", icon: Radio },
-  { label: "Missions", icon: Map },
-  { label: "Agents", icon: ShieldCheck },
-  { label: "Vehicles", icon: CarFront },
+  { label: "Overview", icon: LayoutDashboard, to: "/" },
+  { label: "Live Operations", icon: Radio, to: "/#live-operations" },
+  { label: "Missions", icon: Map, to: "/#missions" },
+  { label: "Agents", icon: ShieldCheck, to: "/#agents" },
+  { label: "Vehicles", icon: CarFront, to: "/#vehicles" },
 ];
 
 export default function Sidebar() {
@@ -24,6 +24,7 @@ export default function Sidebar() {
         <div className="brand-icon">
           <Activity size={23} />
         </div>
+
         <div>
           <div className="brand-name">GuinéeRoute</div>
           <div className="brand-subtitle">COMMAND CENTER</div>
@@ -33,21 +34,31 @@ export default function Sidebar() {
       <div className="nav-label">WORKSPACE</div>
 
       <nav className="navigation">
-        {navigation.map(({ label, icon: Icon }, index) => (
-          <a
-            href={
-              index === 0
-                ? "#overview"
-                : `#${label.toLowerCase().replaceAll(" ", "-")}`
-            }
+        {navigation.map(({ label, icon: Icon, to }, index) => (
+          <NavLink
             key={label}
-            className={`nav-item ${index === 0 ? "active" : ""}`}
+            to={to}
+            end={index === 0}
+            className={({ isActive }) =>
+              `nav-item ${isActive && index === 0 ? "active" : ""}`
+            }
           >
             <Icon size={19} />
             <span>{label}</span>
+
             {label === "Live Operations" && <span className="nav-live-dot" />}
-          </a>
+          </NavLink>
         ))}
+
+        <NavLink
+          to="/field-agent"
+          className={({ isActive }) =>
+            `nav-item field-agent-nav ${isActive ? "active" : ""}`
+          }
+        >
+          <UserRound size={19} />
+          <span>Field Agent</span>
+        </NavLink>
       </nav>
 
       <div className="sidebar-bottom">
@@ -57,7 +68,7 @@ export default function Sidebar() {
             <strong>System connected</strong>
             <p>API connection ready</p>
           </div>
-        </div>    
+        </div>
 
         <div className="profile">
           <div className="avatar">OP</div>
