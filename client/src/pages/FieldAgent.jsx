@@ -18,7 +18,7 @@ import "./FieldAgent.css";
 
 import { useNavigate } from "react-router-dom";
 
-const API_BASE = "http://localhost:5000/api/v1";
+const API_BASE = "http://localhost:5000/api/v1" || "https://guinee-route-api.onrender.com/api/v1";
 
 const STATUS_OPTIONS = [
   { value: "ON_DUTY", label: "On Duty" },
@@ -358,9 +358,8 @@ export default function FieldAgent() {
                     <button
                       key={option.value}
                       type="button"
-                      className={`field-status-button ${
-                        selectedAgent.status === option.value ? "selected" : ""
-                      }`}
+                      className={`field-status-button ${selectedAgent.status === option.value ? "selected" : ""
+                        }`}
                       disabled={
                         updatingStatus || selectedAgent.status === option.value
                       }
