@@ -945,6 +945,104 @@
   color: #ffffff;
 }
 
+/* Corridor RN1 Overlay Badge on Map */
+.cmd-map-corridor-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(17, 52, 45, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: #ffffff;
+  z-index: 4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.corridor-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+  animation: corridorPulse 2s infinite ease-in-out;
+}
+
+@keyframes corridorPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.6;
+  }
+}
+
+.cmd-map-corridor-badge .corridor-title {
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.cmd-map-corridor-badge .corridor-sub {
+  color: #b9d7cb;
+  font-size: 10px;
+}
+
+/* Animated Tactical Flow along Corridor */
+@keyframes flowDash {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+.corridor-active-flow {
+  animation: flowDash 3s linear infinite;
+}
+
+.corridor-rn1-glow-pulse {
+  animation: corridorGlow 3s infinite alternate ease-in-out;
+}
+
+@keyframes corridorGlow {
+  from {
+    opacity: 0.6;
+    stroke-width: 5;
+  }
+  to {
+    opacity: 1;
+    stroke-width: 7.5;
+  }
+}
+
+/* Clickable mission link in Live Agents table */
+.cmd-table-mission-link {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1669aa;
+  background: #e9f2f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #c9e0f3;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cmd-table-mission-link:hover {
+  background: #1669aa;
+  color: #ffffff;
+}
+
 /* Map Town Pin */
 .cmd-map-town-pin {
   position: absolute;
@@ -2302,6 +2400,107 @@
   margin-top: 1px;
 }
 
+.cmd-drawer-prog-stats-chips {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.cmd-drawer-prog-stats-chips .chip-item {
+  flex: 1;
+  background: #f1f5f3;
+  border: 1px solid #e2ebe6;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 10.5px;
+  color: #4b5d56;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.cmd-drawer-prog-stats-chips .chip-item strong {
+  color: #15231f;
+  font-weight: 700;
+}
+
+/* Recorded Violations Breakdown */
+.cmd-drawer-violations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cmd-drawer-violation-card {
+  background: #fdfcfb;
+  border: 1px solid #eddcd8;
+  border-radius: 8px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: all 0.15s ease;
+}
+
+.cmd-drawer-violation-card:hover {
+  background: #fffafa;
+  border-color: #e5b8b1;
+  box-shadow: 0 2px 6px rgba(205, 17, 38, 0.05);
+}
+
+.cmd-vio-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cmd-vio-code {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 750;
+  color: #b91c1c;
+}
+
+.cmd-vio-badge {
+  font-size: 10px;
+  font-weight: 650;
+  padding: 1.5px 6.5px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.cmd-vio-badge.badge-paid {
+  background: #e6f4ea;
+  color: #137333;
+}
+
+.cmd-vio-badge.badge-pending {
+  background: #fef7e0;
+  color: #b06000;
+}
+
+.cmd-vio-type {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #1c2e27;
+}
+
+.cmd-vio-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: #72827d;
+}
+
+.cmd-vio-meta .cmd-vio-amount {
+  font-weight: 700;
+  color: #15231f;
+}
+
 /* Action Buttons */
 .cmd-drawer-actions {
   display: flex;
@@ -2351,4 +2550,284 @@
 .cmd-drawer-btn-view-agent:hover {
   background: #f6f8f6;
   border-color: #c8d2ce;
+}
+
+/* Smooth anchor target scrolling offset for sticky topbar */
+[id] {
+  scroll-margin-top: 76px;
+}
+
+.cmd-section-focused {
+  outline: 2px solid var(--cmd-brand-green);
+  outline-offset: 3px;
+  border-radius: 8px;
+  transition: outline 0.3s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Field Agent Details Modal (Aligned & Guinea Route Theme)
+   -------------------------------------------------------------------------- */
+.cmd-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(17, 52, 45, 0.65);
+  backdrop-filter: blur(4px);
+  animation: cmdFadeIn 0.2s ease-out;
+}
+
+.cmd-agent-modal {
+  position: relative;
+  width: min(100%, 430px);
+  background: #ffffff;
+  border: 1px solid #dde4e1;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 16px 40px rgba(17, 52, 45, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: cmdScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cmdScaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.cmd-agent-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cmd-modal-eyebrow {
+  font-size: 11px;
+  font-weight: 750;
+  color: #6d7c77;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.cmd-modal-agent-name {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 750;
+  color: #15231f;
+  letter-spacing: -0.01em;
+}
+
+.cmd-modal-close-btn {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  border-radius: 6px;
+  color: #8a9994;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.cmd-modal-close-btn:hover {
+  background: #f6f8f6;
+  color: #15231f;
+}
+
+.cmd-modal-profile-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #f6f8f6;
+  border: 1px solid #dde4e1;
+  border-radius: 8px;
+}
+
+.cmd-modal-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.cmd-modal-avatar-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
+.cmd-modal-avatar-dot.dot-online {
+  background: #009360;
+}
+
+.cmd-modal-avatar-dot.dot-offline {
+  background: #cd1126;
+}
+
+.cmd-modal-profile-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cmd-modal-badge-id {
+  font-size: 12px;
+  color: #52605b;
+}
+
+.cmd-modal-badge-id strong {
+  color: #15231f;
+  font-family: monospace;
+}
+
+.cmd-modal-role-text {
+  font-size: 11.5px;
+  color: #6d7c77;
+}
+
+.cmd-modal-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #dde4e1;
+  border-radius: 8px;
+}
+
+.cmd-modal-status-bar .lbl {
+  font-size: 12px;
+  font-weight: 600;
+  color: #52605b;
+}
+
+.cmd-modal-status-select {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #c8d4cf;
+  background: #f6f8f6;
+  font-size: 12px;
+  font-weight: 600;
+  color: #15231f;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.cmd-modal-status-select:focus {
+  border-color: #006946;
+}
+
+.cmd-modal-details-card {
+  background: #fdfdfd;
+  border: 1px solid #edf2ef;
+  border-radius: 8px;
+  padding: 2px 14px;
+}
+
+.cmd-modal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7.5px 0;
+  border-bottom: 1px solid #edf2ef;
+}
+
+.cmd-modal-row:last-child {
+  border-bottom: none;
+}
+
+.cmd-modal-row .row-label {
+  font-size: 12px;
+  color: #6d7c77;
+  font-weight: 500;
+}
+
+.cmd-modal-row .row-value {
+  font-size: 12px;
+  color: #15231f;
+  font-weight: 600;
+  text-align: right;
+}
+
+.cmd-modal-row .row-value.font-mono {
+  font-family: monospace;
+}
+
+.cmd-modal-row .row-value.val-active {
+  color: #009360;
+  font-weight: 650;
+}
+
+.cmd-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.cmd-modal-btn-green {
+  background: #006946 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 9px 24px !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 6px rgba(0, 105, 70, 0.25) !important;
+  transition: all 0.15s ease !important;
+}
+
+.cmd-modal-btn-green:hover {
+  background: #00543a !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(0, 105, 70, 0.35) !important;
+}
+
+.cmd-modal-btn-secondary {
+  background: #ffffff !important;
+  color: #15231f !important;
+  border: 1px solid #dde4e1 !important;
+  border-radius: 8px !important;
+  padding: 9px 16px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.cmd-modal-btn-secondary:hover {
+  background: #f6f8f6 !important;
+  border-color: #c8d4cf !important;
 }

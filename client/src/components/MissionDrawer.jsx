@@ -103,9 +103,36 @@ export default function MissionDrawer({
     mission?.reportsCount ??
     (mission?.reports ? mission.reports.length : 1);
 
+  // Violations list
+  const violationsList =
+    (activeMission?.violations && activeMission.violations.length > 0)
+      ? activeMission.violations
+      : (mission?.violations && mission.violations.length > 0)
+      ? mission.violations
+      : (activeAgent?.missions?.[0]?.violations && activeAgent.missions[0].violations.length > 0)
+      ? activeAgent.missions[0].violations
+      : [
+          {
+            id: 1,
+            violationCode: "GR-VIO-001",
+            violationType: "Unauthorized Heavy Vehicle",
+            fineAmountGnf: 750000,
+            paid: true,
+            location: "RN1 km 7.4 (Coyah)",
+          },
+          {
+            id: 2,
+            violationCode: "GR-VIO-002",
+            violationType: "Expired Registration",
+            fineAmountGnf: 300000,
+            paid: false,
+            location: "RN1 km 11.2 (Dubréka)",
+          },
+        ];
+
   const violationsCount =
     activeMission?.violations?.length ??
-    (mission?.violations ? mission.violations.length : 2);
+    (mission?.violations ? mission.violations.length : violationsList.length);
 
   // GPS & Progress
   const gpsStatus = activeAgent?.gps || "Active";
@@ -178,8 +205,8 @@ export default function MissionDrawer({
               <span className="row-value">{agentName}</span>
             </div>
             <div className="cmd-drawer-detail-row">
-              <span className="row-label">Road</span>
-              <span className="row-value">{road}</span>
+              <span className="row-label">Corridor / Road</span>
+              <span className="row-value">{road} · Coyah ⇄ Dubréka</span>
             </div>
             <div className="cmd-drawer-detail-row">
               <span className="row-label">From</span>
@@ -215,10 +242,10 @@ export default function MissionDrawer({
             </div>
             <div className="cmd-drawer-detail-row">
               <span className="row-label">Violations</span>
-              <span className="row-value">{violationsCount}</span>
+              <span className="row-value">{violationsCount} recorded</span>
             </div>
             <div className="cmd-drawer-detail-row">
-              <span className="row-label">GPS</span>
+              <span className="row-label">GPS Tracking</span>
               <span className="row-value val-active">{gpsStatus}</span>
             </div>
           </div>
@@ -236,9 +263,50 @@ export default function MissionDrawer({
               />
             </div>
             <div className="cmd-drawer-prog-bounds">
-              <span>{fromLocation}</span>
-              <span>{toLocation}</span>
+              <span>{fromLocation} (0 km)</span>
+              <span>{toLocation} ({totalKm} km)</span>
             </div>
+            <div className="cmd-drawer-prog-stats-chips">
+              <span className="chip-item"><strong>{coveredKm} km</strong> covered</span>
+              <span className="chip-item"><strong>{remainingKm} km</strong> remaining</span>
+              <span className="chip-item"><strong>{duration}</strong> elapsed</span>
+            </div>
+          </div>
+
+          {/* Recorded Violations Section */}
+          <div className="cmd-drawer-section-title">
+            RECORDED VIOLATIONS ({violationsList.length})
+          </div>
+
+          <div className="cmd-drawer-violations-list">
+            {violationsList.map((vio, index) => (
+              <div
+                key={vio.id || index}
+                className="cmd-drawer-violation-card"
+              >
+                <div className="cmd-vio-card-header">
+                  <span className="cmd-vio-code">{vio.violationCode || `GR-VIO-00${index + 1}`}</span>
+                  <span
+                    className={`cmd-vio-badge ${
+                      vio.paid ? "badge-paid" : "badge-pending"
+                    }`}
+                  >
+                    {vio.paid ? "● Paid Cash" : "● Fine Issued"}
+                  </span>
+                </div>
+                <div className="cmd-vio-type">
+                  {vio.violationType || vio.type || "Traffic Violation"}
+                </div>
+                <div className="cmd-vio-meta">
+                  <span className="cmd-vio-amount">
+                    {vio.fineAmountGnf
+                      ? `GNF ${vio.fineAmountGnf.toLocaleString()}`
+                      : vio.fine || "GNF 750,000"}
+                  </span>
+                  <span>· {vio.location || "Corridor RN1"}</span>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Action Buttons */}

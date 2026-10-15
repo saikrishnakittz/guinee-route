@@ -1317,6 +1317,17 @@ a {
   margin-top: 10px;
 }
 
+.agent-modal .primary-button,
+.agent-modal button.primary-button {
+  background: #006946 !important;
+  color: #ffffff !important;
+}
+
+.agent-modal .primary-button:hover,
+.agent-modal button.primary-button:hover {
+  background: #00543a !important;
+}
+
 @media (min-width: 1500px) {
   .page-content {
     padding-left: 42px;

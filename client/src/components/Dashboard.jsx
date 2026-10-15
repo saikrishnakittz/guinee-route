@@ -58,14 +58,15 @@ export default function Dashboard() {
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [selectedMission, setSelectedMission] = useState(null);
   const [activeAgentDetail, setActiveAgentDetail] = useState(null);
-  const [currentTime, setCurrentTime] = useState("05 October 2026 · 10:42:16");
+  const [currentTime, setCurrentTime] = useState("15 October 2026 · 10:42:16");
+  const [mapFilter, setMapFilter] = useState("all");
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
 
-  const [selectedDate, setSelectedDate] = useState("05 October 2026");
+  const [selectedDate, setSelectedDate] = useState("15 October 2026");
   const [selectedScope, setSelectedScope] = useState("All Guinea");
   const [selectedRegion, setSelectedRegion] = useState("All Regions");
   const [selectedSupervisor, setSelectedSupervisor] = useState("All Supervisors");
@@ -73,7 +74,7 @@ export default function Dashboard() {
 
   // Filter Dropdown Options
   const dateOptions = [
-    "05 October 2026",
+    "15 October 2026",
     "04 October 2026",
     "Last 7 Days",
     "Last 30 Days",
@@ -156,12 +157,60 @@ export default function Dashboard() {
     };
   }, []);
 
+  // Handle URL hash navigation and scroll to target sections (e.g. #road-damage, #roads, #repairs)
+  useEffect(() => {
+    const scrollToHash = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (!hash) return;
+
+      let targetId = hash;
+      if (
+        targetId === "roads" ||
+        targetId === "damage-reports" ||
+        targetId === "repairs" ||
+        targetId === "road-damage"
+      ) {
+        targetId = "road-damage";
+      } else if (targetId === "vehicles") {
+        targetId = "enforcement";
+      } else if (targetId === "payments" || targetId === "reconciliation") {
+        targetId = "finance";
+      }
+
+      const el =
+        document.getElementById(targetId) ||
+        document.getElementById("damage-reports") ||
+        document.getElementById(hash);
+
+      if (el) {
+        const topOffset = el.getBoundingClientRect().top + window.scrollY - 76;
+        window.scrollTo({
+          top: Math.max(0, topOffset),
+          behavior: "smooth",
+        });
+
+        el.classList.add("cmd-section-focused");
+        setTimeout(() => {
+          el.classList.remove("cmd-section-focused");
+        }, 1600);
+      }
+    };
+
+    // Small delay to ensure child DOM is fully mounted
+    const timer = setTimeout(scrollToHash, 100);
+    window.addEventListener("hashchange", scrollToHash);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("hashchange", scrollToHash);
+    };
+  }, []);
+
   // Keep a live realistic clock for the topbar
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
       const timeStr = now.toLocaleTimeString("en-GB", { hour12: false });
-      setCurrentTime(`05 October 2026 · ${timeStr}`);
+      setCurrentTime(`15 October 2026 · ${timeStr}`);
     };
     updateClock();
     const interval = setInterval(updateClock, 1000);
@@ -231,7 +280,7 @@ export default function Dashboard() {
       region: "Kindia",
       supervisor: "Ibrahima Camara (National)",
       scope: "National Corridors (RN1, RN3)",
-      duty: "02h 14m",
+      duty: "00h 52m",
       dutyStart: "08:02",
       sync: "1 min",
       syncAgo: "1 min ago",
@@ -699,7 +748,7 @@ export default function Dashboard() {
   // Helper check for active filters
   const isFiltered =
     searchQuery.trim() !== "" ||
-    selectedDate !== "05 October 2026" ||
+    selectedDate !== "15 October 2026" ||
     selectedScope !== "All Guinea" ||
     selectedRegion !== "All Regions" ||
     selectedSupervisor !== "All Supervisors" ||
@@ -708,7 +757,7 @@ export default function Dashboard() {
   const handleResetFilters = () => {
     setSearchQuery("");
     setIsSearchOpen(false);
-    setSelectedDate("05 October 2026");
+    setSelectedDate("15 October 2026");
     setSelectedScope("All Guinea");
     setSelectedRegion("All Regions");
     setSelectedSupervisor("All Supervisors");
@@ -877,13 +926,13 @@ export default function Dashboard() {
   // Currently focused agent in the Agent Detail card
   const activeInspector = activeAgentDetail || (filteredAgents.length > 0 ? filteredAgents[0] : displayAgents[0]);
 
-  // Top 6 KPI Cards definition matching uploaded image and populated from live PostgreSQL
+  // Top 6 KPI Cards definition fulfilling Option A specification (Total agents on duty, active missions, offline alerts)
   const kpiCards = [
     {
       type: "agents",
-      label: "Agents Online",
-      value: isFiltered ? `${filteredAgents.length}` : (stats?.agentsOnDuty ?? "42"),
-      description: isFiltered ? `${filteredAgents.length} matching filters` : `${stats?.totalAgents ?? 48} on duty today`,
+      label: "Total Agents on Duty",
+      value: isFiltered ? `${filteredAgents.filter(a => a.status !== "OFFLINE").length}` : (stats?.agentsOnDuty ?? "42"),
+      description: isFiltered ? `${filteredAgents.length} matching filters` : `${stats?.totalAgents ?? 48} total field agents`,
       trend: "+3",
       trendType: "pos",
     },
@@ -891,9 +940,17 @@ export default function Dashboard() {
       type: "missions",
       label: "Active Missions",
       value: isFiltered ? `${filteredMissions.length}` : (stats?.activeMissions ?? "18"),
-      description: isFiltered ? `${filteredMissions.length} active in scope` : "31 assigned today",
+      description: isFiltered ? `${filteredMissions.length} active in scope` : "Corridor RN1 & National",
       trend: "+1",
       trendType: "pos",
+    },
+    {
+      type: "offline",
+      label: "Offline Alerts",
+      value: isFiltered ? `${filteredAgents.filter(a => a.status === "OFFLINE").length}` : `${stats?.offlineAgents ?? 6}`,
+      description: "Sync delay > 15m",
+      trend: "Alert",
+      trendType: "alert",
     },
     {
       type: "reports",
@@ -907,17 +964,9 @@ export default function Dashboard() {
       type: "violations",
       label: "Violations Today",
       value: isFiltered ? `${filteredViolations.length}` : (stats?.totalViolations ?? "19"),
-      description: "4 heavy vehicle",
+      description: "4 heavy vehicle violations",
       trend: "+2",
       trendType: "pos",
-    },
-    {
-      type: "fines",
-      label: "Fine Value Issued",
-      value: isFiltered && filteredViolations.length < 4
-        ? `GNF ${(filteredViolations.length * 0.7).toFixed(2)}M`
-        : (stats?.totalFinesGnf ? `GNF ${(stats.totalFinesGnf / 1000000).toFixed(2)}M` : "GNF 12.85M"),
-      description: "Today",
     },
     {
       type: "cash",
@@ -925,7 +974,9 @@ export default function Dashboard() {
       value: isFiltered && filteredViolations.length < 4
         ? `GNF ${(filteredViolations.length * 0.35).toFixed(2)}M`
         : (stats?.paidFinesGnf ? `GNF ${(stats.paidFinesGnf / 1000000).toFixed(2)}M` : "GNF 5.40M"),
-      description: stats?.unpaidFinesGnf ? `GNF ${(stats.unpaidFinesGnf / 1000000).toFixed(2)}M pending` : "GNF 1.25M pending",
+      description: stats?.totalFinesGnf ? `GNF ${(stats.totalFinesGnf / 1000000).toFixed(2)}M total fines` : "GNF 12.85M fines issued",
+      trend: "+8.4%",
+      trendType: "pos",
     },
   ];
 
@@ -1245,13 +1296,13 @@ export default function Dashboard() {
                 <div className="cmd-filter-dropdown-wrap">
                   <button
                     type="button"
-                    className={`cmd-filter-pill ${activeDropdown === "date" ? "open" : ""} ${selectedDate !== "05 October 2026" ? "active-filtered" : ""}`}
+                    className={`cmd-filter-pill ${activeDropdown === "date" ? "open" : ""} ${selectedDate !== "15 October 2026" ? "active-filtered" : ""}`}
                     onClick={() => setActiveDropdown(activeDropdown === "date" ? null : "date")}
                   >
                     <Calendar size={13} className="filter-icon" />
                     <span className="filter-label">Date</span>
-                    <span className="filter-val">{selectedDate === "05 October 2026" ? "Today" : selectedDate}</span>
-                    {selectedDate !== "05 October 2026" && <span className="active-filter-dot" />}
+                    <span className="filter-val">{selectedDate === "15 October 2026" ? "Today" : selectedDate}</span>
+                    {selectedDate !== "15 October 2026" && <span className="active-filter-dot" />}
                     <ChevronDown size={12} className="chevron-icon" />
                   </button>
 
@@ -1462,9 +1513,48 @@ export default function Dashboard() {
 
                 {/* Filter buttons on map */}
                 <div className="cmd-map-filter-group">
-                  <button type="button" className="cmd-map-btn active">All</button>
-                  <button type="button" className="cmd-map-btn inactive">Active</button>
-                  <button type="button" className="cmd-map-btn inactive">Emergencies</button>
+                  <button
+                    type="button"
+                    className={`cmd-map-btn ${mapFilter === "all" ? "active" : "inactive"}`}
+                    onClick={() => setMapFilter("all")}
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    className={`cmd-map-btn ${mapFilter === "corridor" ? "active" : "inactive"}`}
+                    onClick={() => {
+                      setMapFilter("corridor");
+                      setActiveAgentDetail(displayAgents[0]);
+                    }}
+                    title="Display Corridor RN1 (Coyah to Dubréka)"
+                  >
+                    Corridor RN1 (Coyah ⇄ Dubréka)
+                  </button>
+                  <button
+                    type="button"
+                    className={`cmd-map-btn ${mapFilter === "active" ? "active" : "inactive"}`}
+                    onClick={() => setMapFilter("active")}
+                  >
+                    Active
+                  </button>
+                  <button
+                    type="button"
+                    className={`cmd-map-btn ${mapFilter === "emergencies" ? "active" : "inactive"}`}
+                    onClick={() => setMapFilter("emergencies")}
+                  >
+                    Emergencies
+                  </button>
+                </div>
+
+                {/* Corridor RN1 Live Status Overlay Badge */}
+                <div
+                  className="cmd-map-corridor-badge"
+                  title="Corridor RN1: Coyah to Dubréka · 18.6 km active inspection corridor"
+                >
+                  <span className="corridor-pulse-dot" />
+                  <span className="corridor-title">Corridor RN1</span>
+                  <span className="corridor-sub">Coyah ⇄ Dubréka (18.6 km)</span>
                 </div>
 
                 {/* Tactical SVG Road Network */}
@@ -1517,7 +1607,7 @@ export default function Dashboard() {
                     fill="none"
                   />
 
-                  {/* RN1 Main Corridor */}
+                  {/* RN1 Main Corridor Base */}
                   <path
                     d="M 70 240 C 180 220, 160 120, 300 150 S 460 240, 560 140 S 680 90, 720 50"
                     stroke="#1669aa"
@@ -1533,6 +1623,26 @@ export default function Dashboard() {
                     strokeDasharray="8 6"
                     fill="none"
                     strokeLinecap="round"
+                  />
+
+                  {/* Corridor RN1: Coyah to Dubréka Dedicated Glowing Segment */}
+                  <path
+                    d="M 280 148 C 360 185, 450 190, 532 136"
+                    stroke={mapFilter === "corridor" ? "#38bdf8" : "#0284c7"}
+                    strokeWidth={mapFilter === "corridor" ? "7.5" : "5.5"}
+                    strokeLinecap="round"
+                    fill="none"
+                    filter="url(#glow-blue)"
+                    className="corridor-rn1-glow-pulse"
+                  />
+                  <path
+                    d="M 280 148 C 360 185, 450 190, 532 136"
+                    stroke="#ffffff"
+                    strokeWidth="2.5"
+                    strokeDasharray="6 6"
+                    fill="none"
+                    strokeLinecap="round"
+                    className="corridor-active-flow"
                   />
 
                   {/* Route Le Prince */}
@@ -1565,16 +1675,18 @@ export default function Dashboard() {
                 <div
                   className="cmd-map-town-pin"
                   style={{ left: "37%", top: "45%" }}
+                  title="Coyah (Corridor RN1 Start · km 0.0)"
                 >
-                  <span className="cmd-town-dot" />
-                  <span>Coyah</span>
+                  <span className="cmd-town-dot" style={{ background: "#38bdf8", boxShadow: "0 0 8px #38bdf8" }} />
+                  <span style={{ color: "#ffffff", fontWeight: 700 }}>Coyah (RN1)</span>
                 </div>
                 <div
                   className="cmd-map-town-pin"
                   style={{ left: "70%", top: "42%" }}
+                  title="Dubréka (Corridor RN1 End · km 18.6)"
                 >
-                  <span className="cmd-town-dot" />
-                  <span>Dubréka</span>
+                  <span className="cmd-town-dot" style={{ background: "#38bdf8", boxShadow: "0 0 8px #38bdf8" }} />
+                  <span style={{ color: "#ffffff", fontWeight: 700 }}>Dubréka (RN1)</span>
                 </div>
                 <div
                   className="cmd-map-town-pin"
@@ -1591,23 +1703,29 @@ export default function Dashboard() {
                   <span>RN3</span>
                 </div>
 
-                {/* Agent Pins on Map */}
+                {/* Agent Pins on Map with direct Live Mission Drawer inspection */}
                 <button
                   type="button"
                   className="cmd-map-agent-marker marker-agent-md"
-                  style={{ left: "38%", top: "48%" }}
-                  title="Mamadou Diallo (AGT-1048) — RN1 Coyah"
-                  onClick={() => setActiveAgentDetail(displayAgents[0])}
+                  style={{ left: "48%", top: "52%" }}
+                  title="Mamadou Diallo (AGT-1048) — Corridor RN1 Coyah → Dubréka (40% progress) · Click to inspect mission in drawer"
+                  onClick={() => {
+                    setActiveAgentDetail(displayAgents[0]);
+                    setSelectedMission(displayAgents[0]);
+                  }}
                 >
-                  <span>⚡</span> MD
+                  <span>⚡</span> MD · 40%
                 </button>
 
                 <button
                   type="button"
                   className="cmd-map-agent-marker marker-agent-ab"
                   style={{ left: "26%", top: "42%" }}
-                  title="Aissatou Bah (AGT-1052) — R. Le Prince"
-                  onClick={() => setActiveAgentDetail(displayAgents[1])}
+                  title="Aissatou Bah (AGT-1052) — R. Le Prince (68% progress) · Click to inspect mission in drawer"
+                  onClick={() => {
+                    setActiveAgentDetail(displayAgents[1]);
+                    setSelectedMission(displayAgents[1]);
+                  }}
                 >
                   <span>!</span> AB RN1
                 </button>
@@ -1616,18 +1734,24 @@ export default function Dashboard() {
                   type="button"
                   className="cmd-map-agent-marker marker-agent-ac"
                   style={{ left: "71%", top: "44%" }}
-                  title="Alpha Condé (AGT-1061) — Dubréka (Offline)"
-                  onClick={() => setActiveAgentDetail(displayAgents[2])}
+                  title="Alpha Condé (AGT-1061) — Dubréka (Offline Alert · 18 min ago) · Click to inspect mission in drawer"
+                  onClick={() => {
+                    setActiveAgentDetail(displayAgents[2]);
+                    setSelectedMission(displayAgents[2]);
+                  }}
                 >
-                  <span>✕</span> AC
+                  <span>✕</span> AC · Offline
                 </button>
 
                 <button
                   type="button"
                   className="cmd-map-agent-marker marker-agent-mc"
                   style={{ left: "13%", bottom: "24%" }}
-                  title="Mariama Camara (AGT-1067) — Conakry"
-                  onClick={() => setActiveAgentDetail(displayAgents[3])}
+                  title="Mariama Camara (AGT-1067) — Conakry Patrol · Click to inspect mission in drawer"
+                  onClick={() => {
+                    setActiveAgentDetail(displayAgents[3]);
+                    setSelectedMission(displayAgents[3]);
+                  }}
                 >
                   MC
                 </button>
@@ -1635,8 +1759,8 @@ export default function Dashboard() {
                 {/* Emergency Hazard Marker */}
                 <div
                   className="cmd-map-hazard-pin"
-                  style={{ left: "47%", top: "58%" }}
-                  title="Critical road blockage reported · Coyah RN1 km 7.4"
+                  style={{ left: "44%", top: "56%" }}
+                  title="Critical road blockage reported · Corridor RN1 km 7.4 (Near Coyah)"
                 >
                   <span>!</span>
                 </div>
@@ -1822,10 +1946,20 @@ export default function Dashboard() {
                       <tr
                         key={ag.id}
                         onClick={() => setActiveAgentDetail(ag)}
-                        title="Click to view details in card"
+                        onDoubleClick={() => setSelectedMission(ag)}
+                        title="Click to view details · Double-click or click mission code to inspect progress in drawer"
                       >
                         <td>
-                          <div className="cmd-table-agent-info">
+                          <div
+                            className="cmd-table-agent-info"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveAgentDetail(ag);
+                              setSelectedAgent(ag);
+                            }}
+                            style={{ cursor: "pointer" }}
+                            title="Click to view field agent details"
+                          >
                             <div className="cmd-table-agent-avatar">
                               {ag.initials}
                             </div>
@@ -1851,9 +1985,24 @@ export default function Dashboard() {
                           </span>
                         </td>
                         <td>
-                          <span style={{ fontFamily: "monospace", color: "#1669aa" }}>
-                            {ag.shortMission}
-                          </span>
+                          {ag.shortMission && ag.shortMission !== "—" ? (
+                            <button
+                              type="button"
+                              className="cmd-table-mission-link"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveAgentDetail(ag);
+                                setSelectedMission(ag);
+                              }}
+                              title="Click to inspect mission progress (40%) in drawer"
+                            >
+                              {ag.shortMission} ↗
+                            </button>
+                          ) : (
+                            <span style={{ fontFamily: "monospace", color: "#8a9994" }}>
+                              —
+                            </span>
+                          )}
                         </td>
                         <td>{ag.location}</td>
                         <td>{ag.duty}</td>
@@ -1921,9 +2070,20 @@ export default function Dashboard() {
                             displayAgents.find(
                               (a) => a.id === msn.agentId,
                             ) || displayAgents[0];
-                          setSelectedMission(ag);
+                          setActiveAgentDetail(ag);
+                          setSelectedMission({
+                            ...ag,
+                            ...msn,
+                            totalKm: 18.6,
+                            coveredKm: 7.4,
+                            remainingKm: 11.2,
+                            progress: msn.progress || 40,
+                            duration: msn.duration || "00h 52m",
+                            violations: ag.missions?.[0]?.violations || [],
+                          });
                         }}
-                        title="Click to open mission drawer"
+                        title="Click to inspect mission progress (40%) in drawer"
+                        style={{ cursor: "pointer" }}
                       >
                         <td>
                           <strong style={{ color: "#1669aa", fontFamily: "monospace" }}>
@@ -1966,7 +2126,7 @@ export default function Dashboard() {
           {/* ROW 3: Road Damage & Enforcement */}
           <section className="cmd-row-split-2" id="damage-reports">
             {/* Road Damage Card */}
-            <article className="cmd-card">
+            <article className="cmd-card" id="road-damage">
               <header className="cmd-card-header">
                 <div>
                   <h2 className="cmd-card-title">Road Damage</h2>
@@ -2222,7 +2382,7 @@ export default function Dashboard() {
               <header className="cmd-card-header">
                 <div>
                   <h2 className="cmd-card-title">Finance Snapshot</h2>
-                  <p className="cmd-card-subtitle">05 October 2026</p>
+                  <p className="cmd-card-subtitle">15 October 2026</p>
                 </div>
                 <button type="button" className="cmd-card-action">
                   View finance <ExternalLink size={12} />
@@ -2604,77 +2764,154 @@ export default function Dashboard() {
         </div>
 
         {/* Selected Agent Modal */}
+        {/* Selected Field Agent Details Modal */}
         {selectedAgent && (
           <div
-            className="modal-backdrop"
+            className="cmd-modal-backdrop"
             onClick={() => setSelectedAgent(null)}
             role="presentation"
           >
             <section
-              className="agent-modal"
+              className="cmd-agent-modal"
               role="dialog"
               aria-modal="true"
               aria-labelledby="agent-modal-title"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                className="modal-close"
-                onClick={() => setSelectedAgent(null)}
-              >
-                ×
-              </button>
-              <div className="eyebrow">FIELD AGENT DETAILS</div>
-              <h2 id="agent-modal-title">{selectedAgent.name}</h2>
-              <p>Badge: {selectedAgent.badgeNumber}</p>
-              <p style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span>Status:</span>
+              {/* Header */}
+              <div className="cmd-agent-modal-header">
+                <div>
+                  <div className="cmd-modal-eyebrow">FIELD AGENT DETAILS</div>
+                  <h2 id="agent-modal-title" className="cmd-modal-agent-name">
+                    {selectedAgent.name}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  className="cmd-modal-close-btn"
+                  onClick={() => setSelectedAgent(null)}
+                  aria-label="Close modal"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Agent Profile Head */}
+              <div className="cmd-modal-profile-head">
+                <div
+                  className="cmd-modal-avatar"
+                  style={{ background: selectedAgent.avatarBg || "#006946" }}
+                >
+                  {selectedAgent.initials ||
+                    selectedAgent.name
+                      ?.split(" ")
+                      .map((w) => w[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  <span
+                    className={`cmd-modal-avatar-dot ${selectedAgent.status === "OFFLINE"
+                      ? "dot-offline"
+                      : "dot-online"
+                      }`}
+                  />
+                </div>
+                <div className="cmd-modal-profile-meta">
+                  <div className="cmd-modal-badge-id">
+                    Badge: <strong>{selectedAgent.badgeNumber}</strong>
+                  </div>
+                  <div className="cmd-modal-role-text">
+                    {selectedAgent.role || "Field Inspector"} ·{" "}
+                    {selectedAgent.region || "Kindia"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Bar */}
+              <div className="cmd-modal-status-bar">
+                <span className="lbl">Operational Status:</span>
                 <select
+                  className="cmd-modal-status-select"
                   value={selectedAgent.status}
                   onChange={(e) => {
                     const newStatus = e.target.value;
                     handleUpdateStatus(selectedAgent.id, newStatus);
                     setSelectedAgent({ ...selectedAgent, status: newStatus });
                   }}
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    border: "1px solid #d1d5db",
-                    background: "#ffffff",
-                    fontSize: "13px",
-                    cursor: "pointer",
-                  }}
                 >
-                  <option value="ON_DUTY">On Duty</option>
-                  <option value="ON_MISSION">On Mission</option>
-                  <option value="INSPECTING">Inspecting</option>
-                  <option value="AVAILABLE">Available</option>
-                  <option value="BREAK">On Break</option>
-                  <option value="OFFLINE">Offline</option>
-                  <option value="EMERGENCY">Emergency</option>
+                  <option value="ON_DUTY">● On Duty</option>
+                  <option value="ON_MISSION">● On Mission</option>
+                  <option value="INSPECTING">● Inspecting</option>
+                  <option value="AVAILABLE">● Available</option>
+                  <option value="BREAK">● On Break</option>
+                  <option value="OFFLINE">● Offline</option>
+                  <option value="EMERGENCY">● Emergency</option>
                 </select>
-              </p>
-              <p>Latitude: {selectedAgent.lat}</p>
-              <p>Longitude: {selectedAgent.lng}</p>
-              <div
-                style={{ display: "flex", gap: "10px", marginTop: "14px" }}
-              >
+              </div>
+
+              {/* Details Card */}
+              <div className="cmd-modal-details-card">
+                <div className="cmd-modal-row">
+                  <span className="row-label">Badge Number</span>
+                  <span className="row-value font-mono">
+                    {selectedAgent.badgeNumber}
+                  </span>
+                </div>
+                <div className="cmd-modal-row">
+                  <span className="row-label">Current Route / Road</span>
+                  <span className="row-value">
+                    {selectedAgent.route || selectedAgent.road || "RN1 Coyah ⇄ Dubréka"}
+                  </span>
+                </div>
+                <div className="cmd-modal-row">
+                  <span className="row-label">Assigned Supervisor</span>
+                  <span className="row-value">
+                    {selectedAgent.supervisor || "Ibrahima Camara (National)"}
+                  </span>
+                </div>
+                <div className="cmd-modal-row">
+                  <span className="row-label">Duty Started</span>
+                  <span className="row-value">
+                    {selectedAgent.dutyStart || "08:00"} ({selectedAgent.duty || "00h 52m"})
+                  </span>
+                </div>
+                <div className="cmd-modal-row">
+                  <span className="row-label">Latitude</span>
+                  <span className="row-value font-mono">
+                    {selectedAgent.lat ?? "9.715"}
+                  </span>
+                </div>
+                <div className="cmd-modal-row">
+                  <span className="row-label">Longitude</span>
+                  <span className="row-value font-mono">
+                    {selectedAgent.lng ?? "-13.360"}
+                  </span>
+                </div>
+                <div className="cmd-modal-row">
+                  <span className="row-label">Sync Health</span>
+                  <span className="row-value val-active">
+                    ● {selectedAgent.syncAgo || selectedAgent.sync || "1 min ago"} ({selectedAgent.connection || "Online"})
+                  </span>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="cmd-modal-footer">
                 {selectedAgent.missions?.length > 0 && (
                   <button
-                    className="primary-button"
+                    type="button"
+                    className="cmd-modal-btn-secondary"
                     onClick={() => {
                       setSelectedMission(selectedAgent);
                       setSelectedAgent(null);
                     }}
                   >
-                    View Active Mission
+                    View Active Mission →
                   </button>
                 )}
                 <button
-                  className={
-                    selectedAgent.missions?.length > 0
-                      ? "icon-button"
-                      : "primary-button"
-                  }
+                  type="button"
+                  className="cmd-modal-btn-green"
                   onClick={() => setSelectedAgent(null)}
                 >
                   Close

@@ -49,32 +49,32 @@ const navSections = [
   {
     title: "ROAD MANAGEMENT",
     items: [
-      { label: "Roads", icon: Milestone, to: "/#roads" },
+      { label: "Roads", icon: Milestone, to: "/#road-damage" },
       {
         label: "Damage Reports",
         icon: FileWarning,
-        to: "/#damage-reports",
+        to: "/#road-damage",
         badge: 27,
       },
-      { label: "Repairs", icon: Wrench, to: "/#repairs", badge: 8 },
+      { label: "Repairs", icon: Wrench, to: "/#road-damage", badge: 8 },
     ],
   },
   {
     title: "ENFORCEMENT",
     items: [
       { label: "Violations", icon: ShieldAlert, to: "/#enforcement" },
-      { label: "Vehicles", icon: CarFront, to: "/#vehicles" },   
+      { label: "Vehicles", icon: CarFront, to: "/#enforcement" },   
     ],
   },
   {
     title: "FINANCE",
     items: [
       { label: "Fines", icon: Receipt, to: "/#finance" },
-      { label: "Payments", icon: CreditCard, to: "/#payments" },
+      { label: "Payments", icon: CreditCard, to: "/#finance" },
       {
         label: "Reconciliation",
         icon: Scale,
-        to: "/#reconciliation",
+        to: "/#finance",
         badge: "!",
         badgeType: "warning",
       },
@@ -104,12 +104,43 @@ function handleNavClick(to) {
     return;
   }
 
-  // Allow the URL hash to update before scrolling.
+  let targetId = sectionId;
+  if (
+    targetId === "roads" ||
+    targetId === "damage-reports" ||
+    targetId === "repairs" ||
+    targetId === "road-damage"
+  ) {
+    targetId = "road-damage";
+  } else if (targetId === "vehicles") {
+    targetId = "enforcement";
+  } else if (targetId === "payments" || targetId === "reconciliation") {
+    targetId = "finance";
+  }
+
+  const findAndScroll = () => {
+    const el =
+      document.getElementById(targetId) ||
+      document.getElementById("damage-reports") ||
+      document.getElementById(sectionId);
+
+    if (el) {
+      const topOffset = el.getBoundingClientRect().top + window.scrollY - 76;
+      window.scrollTo({
+        top: Math.max(0, topOffset),
+        behavior: "smooth",
+      });
+
+      el.classList.add("cmd-section-focused");
+      setTimeout(() => {
+        el.classList.remove("cmd-section-focused");
+      }, 1600);
+    }
+  };
+
   requestAnimationFrame(() => {
-    document.getElementById(sectionId)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    findAndScroll();
+    setTimeout(findAndScroll, 60);
   });
 }
 

@@ -5,16 +5,20 @@ import {
   ShieldAlert,
   CreditCard,
   Wallet,
+  WifiOff,
+  AlertTriangle,
   ArrowUpRight,
 } from "lucide-react";
 
 const iconMap = {
   agents: Users,
   missions: Route,
+  offline: WifiOff,
   reports: ClipboardList,
   violations: ShieldAlert,
   fines: CreditCard,
   cash: Wallet,
+  alert: AlertTriangle,
 };
 
 export default function StatCard({
