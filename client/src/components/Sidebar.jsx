@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Map,
@@ -21,6 +22,8 @@ import {
   Workflow,
   History,
   Activity,
+  Menu,
+  X,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
@@ -145,70 +148,147 @@ function handleNavClick(to) {
 }
 
 export default function Sidebar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile sidebar on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Prevent background scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
   return (
-    <aside className="sidebar">
-      {/* Brand Header */}
-      <div className="brand">
-        <div className="brand-flag" aria-label="Guinea Flag" title="République de Guinée">
-          <span className="flag-stripe flag-red" />
-          <span className="flag-stripe flag-yellow" />
-          <span className="flag-stripe flag-green" />
-        </div>
-        <div>
-          <div className="brand-name">
-            GuinéeRoute <span className="brand-dot" />
+    <>
+      {/* Mobile Sticky Header Bar with Hamburger Button (Mobile only: max-width 860px) */}
+      <div className="sidebar-mobile-header">
+        <div className="brand-left">
+          <div className="brand-flag" aria-label="Guinea Flag" title="République de Guinée">
+            <span className="flag-stripe flag-red" />
+            <span className="flag-stripe flag-yellow" />
+            <span className="flag-stripe flag-green" />
           </div>
-          <div className="brand-subtitle">ADMIN PLATFORM</div>
+          <div className="brand-text-wrap">
+            <div className="brand-name">
+              GuinéeRoute <span className="brand-dot" />
+            </div>
+            <div className="brand-subtitle">ADMIN PLATFORM</div>
+          </div>
         </div>
+
+        <button
+          type="button"
+          className="sidebar-hamburger-btn"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={mobileOpen}
+        >
+          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </div>
 
-      {/* Navigation Sections */}
-      <nav className="navigation sidebar-nav-scroll">
-        {navSections.map((section) => (
-          <div key={section.title} className="sidebar-group">
-            <div className="nav-label">{section.title}</div>
-            <div className="nav-group-items">
-              {section.items.map(
-                ({ label, icon: Icon, to, badge, badgeType, active }) => (
-                  <NavLink
-                    key={label}
-                    to={to}
-                    end={to === "/"}
-                    className={({ isActive }) =>
-                      `nav-item ${isActive && to === "/" ? "active" : ""
-                      }`
-                    }
-                    onClick={() => handleNavClick(to)}
-                  >
-                    <Icon size={17} className="nav-icon" />
-                    <span className="nav-text">{label}</span>
+      {/* Mobile Backdrop Overlay */}
+      {mobileOpen && (
+        <div
+          className="sidebar-mobile-backdrop"
+          onClick={() => setMobileOpen(false)}
+          role="presentation"
+        />
+      )}
 
-                    {badge !== undefined && (
-                      <span
-                        className={`sidebar-badge ${badgeType ? `badge-${badgeType}` : ""
+      {/* Main Sidebar (Desktop fixed sidebar / Mobile slide-out drawer) */}
+      <aside className={`sidebar ${mobileOpen ? "mobile-drawer-open" : ""}`}>
+        {/* Brand Header */}
+        <div className="brand">
+          <div className="brand-flag" aria-label="Guinea Flag" title="République de Guinée">
+            <span className="flag-stripe flag-red" />
+            <span className="flag-stripe flag-yellow" />
+            <span className="flag-stripe flag-green" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div className="brand-name">
+              GuinéeRoute <span className="brand-dot" />
+            </div>
+            <div className="brand-subtitle">ADMIN PLATFORM</div>
+          </div>
+
+          {/* Close button inside mobile drawer */}
+          <button
+            type="button"
+            className="sidebar-drawer-close-btn"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Navigation Sections */}
+        <nav className="navigation sidebar-nav-scroll">
+          {navSections.map((section) => (
+            <div key={section.title} className="sidebar-group">
+              <div className="nav-label">{section.title}</div>
+              <div className="nav-group-items">
+                {section.items.map(
+                  ({ label, icon: Icon, to, badge, badgeType, active }) => (
+                    <NavLink
+                      key={label}
+                      to={to}
+                      end={to === "/"}
+                      className={({ isActive }) =>
+                        `nav-item ${
+                          isActive && to === "/" ? "active" : ""
+                        }`
+                      }
+                      onClick={() => {
+                        handleNavClick(to);
+                        setMobileOpen(false); // Close mobile drawer when option is selected!
+                      }}
+                    >
+                      <Icon size={17} className="nav-icon" />
+                      <span className="nav-text">{label}</span>
+
+                      {badge !== undefined && (
+                        <span
+                          className={`sidebar-badge ${
+                            badgeType ? `badge-${badgeType}` : ""
                           }`}
-                      >
-                        {badge}
-                      </span>
-                    )}
-                  </NavLink>
-                ),
-              )}
+                        >
+                          {badge}
+                        </span>
+                      )}
+                    </NavLink>
+                  ),
+                )}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Bottom Profile */}
+        <div className="sidebar-bottom">
+          <div className="profile">
+            <div className="avatar avatar-ic">IC</div>
+            <div className="profile-info">
+              <strong>Ibrahima Camara</strong>
+              <span>National Supervisor</span>
             </div>
           </div>
-        ))}
-      </nav>
-
-      {/* Bottom Profile */}
-      <div className="sidebar-bottom">
-        <div className="profile">
-          <div className="avatar avatar-ic">IC</div>
-          <div className="profile-info">
-            <strong>Ibrahima Camara</strong>
-            <span>National Supervisor</span>
-          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
